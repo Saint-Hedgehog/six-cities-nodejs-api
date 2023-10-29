@@ -1,7 +1,7 @@
 {
   "name": "six-cities",
-  "version": "4.0.0",
-  "description": "Проект «{{projectTitle}}» от HTML Academy",
+  "version": "5.0.0",
+  "description": "Проект «Шесть городов» от HTML Academy",
   "keywords": [
     "rest",
     "api",
