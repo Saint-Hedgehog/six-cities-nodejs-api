@@ -1,13 +1,9 @@
-import type { City } from './city-type.enum.js';
-import type { Goods } from './goods-type.enum.js';
-import type { Location } from './location.type.js';
-import type { OfferType } from './offer-type.enum.js';
-import type { User } from './user.type.js';
+import { City, Goods, Location, OfferType, User } from './index.js';
 
 export type RentOffer = {
   title: string,
   description: string,
-  offerDate: string,
+  offerDate: Date,
   city: City,
   previewImage: string,
   images: string[],

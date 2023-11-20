@@ -1,8 +1,7 @@
 import chalk from 'chalk';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { Command } from './command.interface.js';
-
+import { CommandInterface } from '../index.js';
 
 type PackageJSONConfig = {
   version: string;
@@ -17,24 +16,22 @@ function isPackageJSONConfig(value: unknown): value is PackageJSONConfig {
   );
 }
 
-export class VersionCommand implements Command {
+export class VersionCommand implements CommandInterface {
   constructor(
     private readonly filePath: string = './package.json'
   ) {}
 
-  private readVersion(): string {
-    const jsonContent = readFileSync(resolve(this.filePath), 'utf-8');
-    const importedContent: unknown = JSON.parse(jsonContent);
+  public readonly name = '--version';
 
-    if (! isPackageJSONConfig(importedContent)) {
+  private readVersion(): string {
+    const contentPageJSON = readFileSync(resolve(this.filePath), 'utf-8');
+    const content = JSON.parse(contentPageJSON);
+
+    if (!isPackageJSONConfig(content)) {
       throw new Error('Failed to parse json content.');
     }
 
-    return importedContent.version;
-  }
-
-  public getName(): string {
-    return '--version';
+    return content.version;
   }
 
   public async execute(..._parameters: string[]): Promise<void> {

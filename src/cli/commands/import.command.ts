@@ -1,38 +1,40 @@
 import chalk from 'chalk';
-import { Command } from './command.interface.js';
+import { CommandInterface } from '../index.js';
+import { getErrorMessage, createOffer } from '../../shared/helpers/index.js';
 import { TSVFileReader } from '../../shared/libs/file-reader/index.js';
-import { RentOffer } from '../../shared/types/rent-offer.type.js';
 
-export class ImportCommand implements Command {
-  public getName(): string {
-    return '--import';
+export class ImportCommand implements CommandInterface {
+  public readonly name = '--import';
+
+  private onNewLine(line: string) {
+    const rentOffer = createOffer(line);
+    const {type, city, goods, user, location, ...rest} = rentOffer;
+    const {name, email, avatarPath, type: isPro} = user;
+
+    console.log('city: ', chalk.green(city));
+    console.log('type: ', chalk.blue(type));
+    console.log('user: ', chalk.yellow(name, email, avatarPath, isPro));
+    console.log('goods: ', chalk.cyan(goods));
+    console.log('location: ', chalk.redBright(location.latitude, location.longitude));
+    console.log(rest);
   }
 
-  public execute(...parameters: string[]): void {
-    const [filename] = parameters;
+  private onComplete(count: number) {
+    console.log(`${count} rows has been imported.`);
+  }
+
+  public async execute(filename: string): Promise<void> {
+    if (!filename) {
+      throw new Error('File doesn\'t exist');
+    }
+
     const fileReader = new TSVFileReader(filename.trim());
 
-    try {
-      fileReader.read();
-      const offers = fileReader.toArray();
+    fileReader.on('newline', this.onNewLine);
+    fileReader.on('end', this.onComplete);
 
-      offers.forEach(({type, city, goods, user, location, ...rest}: RentOffer) => {
-        const {name, email, avatarPath, password, type: isPro} = user;
-        console.log('city: ', chalk.green(city));
-        console.log('type: ', chalk.blue(type));
-        console.log('goods: ', chalk.cyan(goods));
-        console.log('user: ', chalk.yellow(name, email, avatarPath, password, isPro));
-        console.log('location: ', chalk.redBright(location.latitude, location.longitude));
-        console.log(rest);
-      });
-    } catch (err) {
-
-      if (!(err instanceof Error)) {
-        throw err;
-      }
-
-      console.error(`Can't import data from file: ${filename}`);
-      console.error(`Details: ${err.message}`);
-    }
+    await fileReader.read().catch((err) => {
+      console.log(`Can't read the file: ${getErrorMessage(err)}`);
+    });
   }
 }

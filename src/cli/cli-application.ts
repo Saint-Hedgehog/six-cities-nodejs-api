@@ -1,37 +1,37 @@
-import { Command } from './commands/command.interface.js';
-import { CommandParser } from './command-parser.js';
+import { CommandInterface } from './index.js';
 
-type CommandCollection = Record<string, Command>;
+type ParsedCommand = Record<string, string[]>
 
 export class CLIApplication {
-  private commands: CommandCollection = {};
+  private commands: Record<string, CommandInterface> = {};
+  private readonly defaultCommand = '--help';
 
-  constructor(
-    private readonly defaultCommand: string = '--help'
-  ) {}
+  private parseCommand(cliArguments: string[]): ParsedCommand {
+    const parsedCommand: ParsedCommand = {};
+    let commandName = '';
 
-  public registerCommands(commandList: Command[]): void {
-    commandList.forEach((command) => {
-      if (Object.hasOwn(this.commands, command.getName())) {
-        throw new Error(`Command ${command.getName()} is already registered`);
+    return cliArguments.reduce((acc, item) => {
+      if (item.startsWith('--')) {
+        acc[item] = [];
+        commandName = item;
+      } else if (commandName && item) {
+        acc[commandName].push(item);
       }
-      this.commands[command.getName()] = command;
-    });
+
+      return acc;
+    }, parsedCommand);
   }
 
-  public getCommand(commandName: string): Command {
-    return this.commands[commandName] ?? this.getDefaultCommand();
+  public registerCommands(commandList: CommandInterface[]): void {
+    this.commands = commandList.reduce((acc, cliCommand) => ({ ...acc, [cliCommand.name]: cliCommand }), {});
   }
 
-  public getDefaultCommand(): Command | never {
-    if (! this.commands[this.defaultCommand]) {
-      throw new Error(`The default command (${this.defaultCommand}) is not registered.`);
-    }
-    return this.commands[this.defaultCommand];
+  public getCommand(commandName: string): CommandInterface {
+    return this.commands[commandName] ?? this.commands[this.defaultCommand];
   }
 
-  public processCommand(argv: string[]): void {
-    const parsedCommand = CommandParser.parse(argv);
+  public executeCommand(argv: string[]): void {
+    const parsedCommand = this.parseCommand(argv);
     const [commandName] = Object.keys(parsedCommand);
     const command = this.getCommand(commandName);
     const commandArguments = parsedCommand[commandName] ?? [];
