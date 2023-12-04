@@ -1,9 +1,11 @@
-import { CommandInterface } from './index.js';
+import { injectable } from 'inversify';
+import { Command } from './index.js';
 
 type ParsedCommand = Record<string, string[]>
 
+@injectable()
 export class CLIApplication {
-  private commands: Record<string, CommandInterface> = {};
+  private commands: Record<string, Command> = {};
   private readonly defaultCommand = '--help';
 
   private parseCommand(cliArguments: string[]): ParsedCommand {
@@ -22,11 +24,11 @@ export class CLIApplication {
     }, parsedCommand);
   }
 
-  public registerCommands(commandList: CommandInterface[]): void {
+  public registerCommands(commandList: Command[]): void {
     this.commands = commandList.reduce((acc, cliCommand) => ({ ...acc, [cliCommand.name]: cliCommand }), {});
   }
 
-  public getCommand(commandName: string): CommandInterface {
+  public getCommand(commandName: string): Command {
     return this.commands[commandName] ?? this.commands[this.defaultCommand];
   }
 

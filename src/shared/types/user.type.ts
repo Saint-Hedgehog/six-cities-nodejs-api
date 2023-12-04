@@ -1,8 +1,8 @@
 import type { UserStatus } from './index.js';
 
 export type User = {
-  name: string;
+  username: string;
   email: string;
   avatarPath: string;
-  type: UserStatus;
+  status: UserStatus;
 };

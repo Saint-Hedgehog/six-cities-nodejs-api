@@ -15,6 +15,6 @@ export type RentOffer = {
   maxAdults: number,
   price: number,
   goods: Goods[],
-  user: User,
+  advertiser: User,
   location: Location,
 }

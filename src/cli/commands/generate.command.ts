@@ -1,10 +1,10 @@
 import got from 'got';
-import { CommandInterface } from '../index.js';
+import { Command } from '../index.js';
 import { MockServerData } from '../../shared/types/index.js';
 import { TSVFileWriter } from '../../shared/libs/file-writer/index.js';
 import { TSVOfferGenerator } from '../../shared/libs/offer-generator/index.js';
 
-export class GenerateCommand implements CommandInterface {
+export class GenerateCommand implements Command {
   private initialData!: MockServerData;
   public readonly name = '--generate';
 

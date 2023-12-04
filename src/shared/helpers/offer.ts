@@ -5,7 +5,7 @@ export function createOffer(offerData: string): RentOffer {
     title, description, offerDate, city,
     previewImage, images, isPremium, isFavorite,
     rating, type, bedrooms, maxAdults,
-    price, goods, name, email,
+    price, goods, username, email,
     avatar, userStatus, longitude, latitude
   ] = offerData.replace('\n', '').split('\t');
 
@@ -15,11 +15,11 @@ export function createOffer(offerData: string): RentOffer {
     latitude: Number.parseFloat(latitude),
     longitude: Number.parseFloat(longitude),
   };
-  const user: User = {
-    name,
+  const advertiser: User = {
+    username,
     email,
     avatarPath: avatar,
-    type: userStatus as UserStatus
+    status: userStatus as UserStatus
   };
 
   return {
@@ -37,7 +37,7 @@ export function createOffer(offerData: string): RentOffer {
     maxAdults: Number.parseInt(maxAdults, 10),
     price: Number.parseInt(price, 10),
     goods: offerGoods as Goods[],
-    user,
+    advertiser,
     location
   };
 }
