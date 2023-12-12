@@ -1,8 +1,21 @@
-import { defaultClasses, getModelForClass, modelOptions, prop, Ref } from '@typegoose/typegoose';
-import { OfferType, City, Goods } from '../../types/index.js';
+import typegoose, { Ref, defaultClasses, getModelForClass } from '@typegoose/typegoose';
+import { OfferType, CityName, Goods } from '../../types/index.js';
 import { UserEntity } from '../user/index.js';
 
+const {prop, modelOptions} = typegoose;
+
 class Location {
+  @prop({required: true})
+  public latitude!: number;
+
+  @prop({required: true})
+  public longitude!: number;
+}
+
+class City {
+  @prop({required: true, type: () => String, enum: CityName})
+  public name!: CityName;
+
   @prop({required: true})
   public latitude!: number;
 
@@ -20,7 +33,6 @@ export interface OfferEntity extends defaultClasses.Base {}
 })
 // eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
 export class OfferEntity extends defaultClasses.TimeStamps {
-
   @prop({required: true, trim: true})
   public title!: string;
 
@@ -30,7 +42,7 @@ export class OfferEntity extends defaultClasses.TimeStamps {
   @prop({required: true})
   public offerDate!: Date;
 
-  @prop({required: true, type: () => String, enum: City})
+  @prop({required: true, _id: false})
   public city!: City;
 
   @prop({required: true})
@@ -63,10 +75,13 @@ export class OfferEntity extends defaultClasses.TimeStamps {
   @prop({required: true, type: () => [String], enum: Goods })
   public goods!: Goods[];
 
-  @prop({ ref: UserEntity, required: true })
-  public userId!: Ref<UserEntity>;
+  @prop({ ref: () => UserEntity, required: true })
+  public advertiserId!: Ref<UserEntity>;
 
-  @prop({required: true})
+  @prop({default: 0})
+  public commentCount!: number;
+
+  @prop({required: true, _id: false})
   public location!: Location;
 }
 

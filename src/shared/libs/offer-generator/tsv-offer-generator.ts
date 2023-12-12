@@ -1,5 +1,6 @@
 import { getRandomArrItem, getRandomArrItems, getRandomNumber, getRandomOfferDate } from '../../helpers/index.js';
-import { City, Goods, MockServerData, OfferType, UserStatus } from '../../types/index.js';
+import { Cities } from '../../modules/offer/index.js';
+import { CityName, Goods, MockServerData, OfferType, UserStatus } from '../../types/index.js';
 import { OfferGenerator } from './offer-generator.interface.js';
 
 const MIN_PRICE = 100;
@@ -23,7 +24,10 @@ export class TSVOfferGenerator implements OfferGenerator {
     const title = getRandomArrItem<string>(this.mockData.titles);
     const description = getRandomArrItem<string>(this.mockData.descriptions);
     const offerDate = getRandomOfferDate().toISOString();
-    const city = getRandomArrItem<string>(Object.values(City));
+    const city = getRandomArrItem(Object.values(CityName).filter((x) => typeof x === 'string'));
+    const cityName = city;
+    const cityLatitude = Cities[city].latitude;
+    const cityLongitude = Cities[city].longitude;
     const previewImage = getRandomArrItem<string>(this.mockData.previewImages);
     const images = getRandomArrItems<string>(this.mockData.offerImages, OFFER_IMAGES_COUNT).join(';');
     const isPremium = getRandomArrItem<string>(['true', 'false']);
@@ -42,11 +46,11 @@ export class TSVOfferGenerator implements OfferGenerator {
     const latitude = getRandomArrItem<string>(this.mockData.latitudes);
 
     return [
-      title, description, offerDate, city,
-      previewImage, images, isPremium, isFavorite,
-      rating, type, bedrooms, maxAdults,
-      price, goods, username, email,
-      avatar, userStatus, longitude, latitude
+      title, description, offerDate, cityName, cityLatitude,
+      cityLongitude, previewImage, images, isPremium, isFavorite,
+      rating, type, bedrooms, maxAdults, price,
+      goods, username, email, avatar, userStatus,
+      longitude, latitude
     ].join('\t');
   }
 }

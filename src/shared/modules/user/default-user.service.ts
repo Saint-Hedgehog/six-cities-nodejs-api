@@ -1,9 +1,11 @@
 
 import { DocumentType, types } from '@typegoose/typegoose';
 import { inject, injectable } from 'inversify';
-import { Component } from '../../types/index.js';
+import { Component, SortType } from '../../types/index.js';
 import { CreateUserDto, UserEntity, UserService } from './index.js';
 import { Logger } from '../../libs/logger/index.js';
+import { UpdateUserDto } from './dto/update-user.dto.js';
+import { OfferEntity } from '../offer/index.js';
 
 @injectable()
 export class DefaultUserService implements UserService {
@@ -23,11 +25,11 @@ export class DefaultUserService implements UserService {
   }
 
   public async findByEmail(email: string): Promise<DocumentType<UserEntity> | null> {
-    return await this.userModel.findOne({email}).exec();
+    return this.userModel.findOne({email}).exec();
   }
 
   public async findById(userId: string): Promise<DocumentType<UserEntity> | null> {
-    return await this.userModel.findById(userId).exec();
+    return this.userModel.findById(userId).exec();
   }
 
   public async findOrCreate(dto: CreateUserDto, salt: string): Promise<DocumentType<UserEntity>> {
@@ -38,5 +40,25 @@ export class DefaultUserService implements UserService {
     }
 
     return this.create(dto, salt);
+  }
+
+  public async updateById(userId: string, dto: UpdateUserDto): Promise<DocumentType<UserEntity> | null> {
+    return this.userModel
+      .findByIdAndUpdate(userId, dto, {new: true})
+      .exec();
+  }
+
+  public async findUserFavorites(userId: string): Promise<DocumentType<OfferEntity>[] | null> {
+
+    return this.userModel
+      .findById(userId, {favorites: true, _id: false})
+      .populate<{favorites: DocumentType<OfferEntity>[]}>('favorites', {}, '', {sort: {createdAt: SortType.Down}})
+      .orFail()
+      .exec()
+      .then((res) => res.favorites);
+  }
+
+  public async changeFavoriteStatus(userId: string, offerId: string, status: boolean): Promise<DocumentType<UserEntity> | null> {
+    return this.userModel.findByIdAndUpdate(userId, {[`${status ? '$push' : '$pull'}`]: { favorites: offerId }}, {new: true}).exec();
   }
 }
