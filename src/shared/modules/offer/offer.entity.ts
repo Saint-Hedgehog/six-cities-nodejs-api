@@ -1,8 +1,6 @@
-import typegoose, { Ref, defaultClasses, getModelForClass } from '@typegoose/typegoose';
+import { defaultClasses, getModelForClass, modelOptions, prop, Ref } from '@typegoose/typegoose';
 import { OfferType, CityName, Goods } from '../../types/index.js';
 import { UserEntity } from '../user/index.js';
-
-const {prop, modelOptions} = typegoose;
 
 class Location {
   @prop({required: true})
@@ -28,7 +26,7 @@ export interface OfferEntity extends defaultClasses.Base {}
 
 @modelOptions({
   schemaOptions: {
-    collection: 'rent-offers'
+    collection: 'offers'
   }
 })
 // eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
@@ -75,7 +73,7 @@ export class OfferEntity extends defaultClasses.TimeStamps {
   @prop({required: true, type: () => [String], enum: Goods })
   public goods!: Goods[];
 
-  @prop({ ref: () => UserEntity, required: true })
+  @prop({ ref: UserEntity, required: true })
   public advertiserId!: Ref<UserEntity>;
 
   @prop({default: 0})
@@ -83,6 +81,9 @@ export class OfferEntity extends defaultClasses.TimeStamps {
 
   @prop({required: true, _id: false})
   public location!: Location;
+
+  @prop({required: true, ref: UserEntity, _id: false, default: [], type: () => [String]})
+  public favoriteForUsers!: Ref<UserEntity>[];
 }
 
 export const OfferModel = getModelForClass(OfferEntity);

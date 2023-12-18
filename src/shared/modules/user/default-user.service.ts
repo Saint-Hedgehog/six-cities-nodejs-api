@@ -1,11 +1,11 @@
-
 import { DocumentType, types } from '@typegoose/typegoose';
 import { inject, injectable } from 'inversify';
 import { Component, SortType } from '../../types/index.js';
-import { CreateUserDto, UserEntity, UserService } from './index.js';
+import { UserEntity, UserService } from './index.js';
 import { Logger } from '../../libs/logger/index.js';
 import { UpdateUserDto } from './dto/update-user.dto.js';
 import { OfferEntity } from '../offer/index.js';
+import { CreateUserDto } from './dto/index.js';
 
 @injectable()
 export class DefaultUserService implements UserService {
@@ -49,7 +49,6 @@ export class DefaultUserService implements UserService {
   }
 
   public async findUserFavorites(userId: string): Promise<DocumentType<OfferEntity>[] | null> {
-
     return this.userModel
       .findById(userId, {favorites: true, _id: false})
       .populate<{favorites: DocumentType<OfferEntity>[]}>('favorites', {}, '', {sort: {createdAt: SortType.Down}})
