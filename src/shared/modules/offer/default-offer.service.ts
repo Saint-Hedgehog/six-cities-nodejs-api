@@ -1,9 +1,8 @@
 import { injectable, inject } from 'inversify';
 import { types, DocumentType } from '@typegoose/typegoose';
-import { DEFAULT_OFFERS_COUNT, MAX_PREMIUM_OFFERS_COUNT, OfferEntity, OfferService } from './index.js';
+import { CreateOfferDTO, OfferEntity, OfferService, UpdateOfferDTO } from './index.js';
 import { Logger } from '../../libs/logger/index.js';
-import { CityName, Component, SortType } from '../../types/index.js';
-import { CreateOfferDto, UpdateOfferDto } from './dto/index.js';
+import { Component, SortType } from '../../types/index.js';
 
 @injectable()
 export class DefaultOfferService implements OfferService {
@@ -12,30 +11,50 @@ export class DefaultOfferService implements OfferService {
     @inject(Component.OfferModel) private readonly offerModel: types.ModelType<OfferEntity>
   ) {}
 
-  public async create(dto: CreateOfferDto): Promise<DocumentType<OfferEntity>> {
-    const result = await this.offerModel.create({...dto, offerDate: new Date()});
+  public async create(dto: CreateOfferDTO): Promise<DocumentType<OfferEntity>> {
+    const offerEntry = await this.offerModel.create(dto);
     this.logger.info(`New offer created: ${dto.title}`);
 
-    return result;
+    return offerEntry.populate(['advertiserId']);
   }
 
-  public async findById(offerId: string): Promise<DocumentType<OfferEntity> | null> {
+  public async findById(offerId: string, isFavorite: boolean): Promise<DocumentType<OfferEntity> | null> {
     return this.offerModel
       .findById(offerId)
       .populate(['advertiserId'])
+      .transform((doc) => doc === null ? doc : Object.assign(doc, {isFavorite}))
       .exec();
   }
 
-  public async find(count?: number): Promise<DocumentType<OfferEntity>[]> {
-    const limit = count ?? DEFAULT_OFFERS_COUNT;
-    return this.offerModel
-      .find({}, {}, {limit})
-      .sort({createdAt: SortType.Down})
-      .populate(['advertiserId'])
-      .exec();
+  public async find(offersCount: number, userId?: string): Promise<DocumentType<OfferEntity>[]> {
+    return this.offerModel.aggregate([
+      {
+        $lookup: {
+          from: 'users',
+          pipeline: [
+            { $match: { $expr: {$eq: [userId, { $toString: '$_id'}] } } },
+            { $project: {_id: false, favorites: true}}
+          ],
+          as: 'user'
+        }
+      },
+      { $unwind: { path: '$user', preserveNullAndEmptyArrays: true } },
+      {
+        $addFields: {
+          isFavorite: {
+            $cond: [{$ne: [{ $type: '$user.favorites'}, 'missing']},
+              {$cond: [{$in: ['$_id', '$user.favorites']}, true, false]},
+              false]
+          }
+        }
+      },
+      { $unset: 'user' },
+      { $sort: { createdAt: SortType.Down }},
+      { $limit: offersCount}
+    ]).exec();
   }
 
-  public async updateById(offerId: string, dto: UpdateOfferDto): Promise<DocumentType<OfferEntity> | null> {
+  public async updateById(offerId: string, dto: UpdateOfferDTO): Promise<DocumentType<OfferEntity> | null> {
     return this.offerModel
       .findByIdAndUpdate(offerId, dto, {new: true})
       .populate(['advertiserId'])
@@ -48,13 +67,40 @@ export class DefaultOfferService implements OfferService {
       .exec();
   }
 
-  public async findPremium(city: CityName): Promise<DocumentType<OfferEntity>[]> {
-    const limit = MAX_PREMIUM_OFFERS_COUNT;
-    return this.offerModel
-      .find({'city.name': `${city}`}, {}, {limit})
-      .sort({createdAt: SortType.Down})
-      .populate(['advertiserId'])
-      .exec();
+  public async findPremium(city: string, offersCount: number, userId?: string): Promise<DocumentType<OfferEntity>[]> {
+    return this.offerModel.aggregate([
+      { $match:
+        {$and:
+          [
+            { $expr: {$eq: ['$city.name', city] } },
+            { $expr: {$eq: ['$isPremium', true] } }
+          ]
+        }
+      },
+      {
+        $lookup: {
+          from: 'users',
+          pipeline: [
+            { $match: { $expr: {$eq: [userId, { $toString: '$_id'}] } } },
+            { $project: {_id: false, favorites: true}}
+          ],
+          as: 'user'
+        }
+      },
+      { $unwind: { path: '$user', preserveNullAndEmptyArrays: true } },
+      {
+        $addFields: {
+          isFavorite: {
+            $cond: [{$ne: [{ $type: '$user.favorites'}, 'missing']},
+              {$cond: [{$in: ['$_id', '$user.favorites']}, true, false]},
+              false]
+          }
+        }
+      },
+      { $unset: 'user' },
+      { $sort: { createdAt: SortType.Down }},
+      { $limit: offersCount}
+    ]).exec();
   }
 
   public async incCommentCount(offerId: string): Promise<DocumentType<OfferEntity> | null> {

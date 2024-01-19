@@ -1,6 +1,5 @@
-import { defaultClasses, getModelForClass, modelOptions, prop, Ref } from '@typegoose/typegoose';
+import { defaultClasses, getModelForClass, modelOptions, prop } from '@typegoose/typegoose';
 import { OfferType, CityName, Goods } from '../../types/index.js';
-import { UserEntity } from '../user/index.js';
 
 class Location {
   @prop({required: true})
@@ -37,8 +36,8 @@ export class OfferEntity extends defaultClasses.TimeStamps {
   @prop({required: true, trim: true})
   public description!: string;
 
-  @prop({required: true})
-  public offerDate!: Date;
+  @prop()
+  public offerDate?: Date;
 
   @prop({required: true, _id: false})
   public city!: City;
@@ -52,10 +51,10 @@ export class OfferEntity extends defaultClasses.TimeStamps {
   @prop({required: true})
   public isPremium!: boolean;
 
-  @prop({required: true})
-  public isFavorite!: boolean;
+  @prop()
+  public isFavorite?: boolean;
 
-  @prop({required: true})
+  @prop({default: 0})
   public rating!: number;
 
   @prop({required: true, type: () => String, enum: OfferType })
@@ -73,17 +72,11 @@ export class OfferEntity extends defaultClasses.TimeStamps {
   @prop({required: true, type: () => [String], enum: Goods })
   public goods!: Goods[];
 
-  @prop({ ref: UserEntity, required: true })
-  public advertiserId!: Ref<UserEntity>;
-
   @prop({default: 0})
-  public commentCount!: number;
+  public commentsCount!: number;
 
   @prop({required: true, _id: false})
   public location!: Location;
-
-  @prop({required: true, ref: UserEntity, _id: false, default: [], type: () => [String]})
-  public favoriteForUsers!: Ref<UserEntity>[];
 }
 
 export const OfferModel = getModelForClass(OfferEntity);

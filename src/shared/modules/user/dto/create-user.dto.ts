@@ -1,6 +1,6 @@
 import { UserStatus } from '../../../types/index.js';
 
-export class CreateUserDto {
+export class CreateUserDTO {
   public username!: string;
   public password!: string;
   public email!: string;
